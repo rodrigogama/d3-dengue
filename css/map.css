@@ -1,0 +1,31 @@
+.regiao.RO,
+.regiao.AC,
+.regiao.AM,
+.regiao.RR,
+.regiao.PA,
+.regiao.AP,
+.regiao.TO { fill: #f9d057; }
+
+.regiao.MA,
+.regiao.PI,
+.regiao.CE,
+.regiao.RN,
+.regiao.PB,
+.regiao.PE,
+.regiao.AL,
+.regiao.SE,
+.regiao.BA { fill: #00ccbc; }
+
+.regiao.MG,
+.regiao.ES,
+.regiao.RJ,
+.regiao.SP { fill: #90eb9d; }
+
+.regiao.PR,
+.regiao.SC,
+.regiao.RS { fill: #f29e2e; }
+
+.regiao.DF,
+.regiao.GO,
+.regiao.MT,
+.regiao.MS { fill: #d7191c; }
