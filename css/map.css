@@ -1,31 +1,45 @@
-.regiao.RO,
-.regiao.AC,
-.regiao.AM,
-.regiao.RR,
-.regiao.PA,
-.regiao.AP,
-.regiao.TO { fill: #f9d057; }
+.mesh {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 1;
+    stroke-linejoin: round;
+}
 
-.regiao.MA,
-.regiao.PI,
-.regiao.CE,
-.regiao.RN,
-.regiao.PB,
-.regiao.PE,
-.regiao.AL,
-.regiao.SE,
-.regiao.BA { fill: #00ccbc; }
+.state-boundary {
+    fill: none;
+    stroke: #777;
+    stroke-dasharray: 2,2;
+    stroke-linejoin: round;
+}
 
-.regiao.MG,
-.regiao.ES,
-.regiao.RJ,
-.regiao.SP { fill: #90eb9d; }
+.state.RO,
+.state.AC,
+.state.AM,
+.state.RR,
+.state.PA,
+.state.AP,
+.state.TO { fill: #90eb9d; }
 
-.regiao.PR,
-.regiao.SC,
-.regiao.RS { fill: #f29e2e; }
+.state.MA,
+.state.PI,
+.state.CE,
+.state.RN,
+.state.PB,
+.state.PE,
+.state.AL,
+.state.SE,
+.state.BA { fill: #00ccbc; }
 
-.regiao.DF,
-.regiao.GO,
-.regiao.MT,
-.regiao.MS { fill: #d7191c; }
+.state.MG,
+.state.ES,
+.state.RJ,
+.state.SP { fill: #d7191c; }
+
+.state.PR,
+.state.SC,
+.state.RS { fill: #f29e2e; }
+
+.state.DF,
+.state.GO,
+.state.MT,
+.state.MS { fill: #f9d057; }
