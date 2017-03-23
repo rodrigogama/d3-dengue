@@ -1,4 +1,4 @@
-[
+var dengue_cases = [
     {
         "region": "Norte",
         "uf": "RO",
@@ -746,7 +746,41 @@
             { "year": 2015, "numberOfCases": 4441 },
             { "year": 2016, "numberOfCases": 5150 }      
         ]
-    },              
+    },
+    {
+        "region": "Sul",
+        "uf": "RS",
+        "state": "Rio Grande do Sul",
+        "record": [
+            { "year": 1990, "numberOfCases": 0 },
+            { "year": 1991, "numberOfCases": 0 },
+            { "year": 1992, "numberOfCases": 0 },
+            { "year": 1993, "numberOfCases": 0 },
+            { "year": 1994, "numberOfCases": 0 },
+            { "year": 1995, "numberOfCases": 0 },
+            { "year": 1996, "numberOfCases": 9 },
+            { "year": 1997, "numberOfCases": 0 },
+            { "year": 1998, "numberOfCases": 107 },
+            { "year": 1999, "numberOfCases": 28 },
+            { "year": 2000, "numberOfCases": 35 },
+            { "year": 2001, "numberOfCases": 55 },
+            { "year": 2002, "numberOfCases": 436 },
+            { "year": 2003, "numberOfCases": 59 },
+            { "year": 2004, "numberOfCases": 20 },
+            { "year": 2005, "numberOfCases": 41 },
+            { "year": 2006, "numberOfCases": 70 },
+            { "year": 2007, "numberOfCases": 423 },
+            { "year": 2008, "numberOfCases": 138 },
+            { "year": 2009, "numberOfCases": 67 },
+            { "year": 2010, "numberOfCases": 3646 },
+            { "year": 2011, "numberOfCases": 363 },
+            { "year": 2012, "numberOfCases": 170 },
+            { "year": 2013, "numberOfCases": 445 },
+            { "year": 2014, "numberOfCases": 153 },
+            { "year": 2015, "numberOfCases": 1698 },
+            { "year": 2016, "numberOfCases": 3195 }      
+        ]
+    },         
     {
         "region": "Centro-Oeste",
         "uf": "MS",

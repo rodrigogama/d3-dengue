@@ -48,16 +48,21 @@
 
     // Scale from 0 to max number of cases of all the time
     var maxCases = [];
-    d3.entries(dengue_cases)[1].value.forEach(function(d) {
-        d.states.forEach(function(d) {
-            maxCases.push(d3.max(d.cases));
-        });
+    dengue_cases.forEach(function(d) {
+        var highest = Number.NEGATIVE_INFINITY;
+        var tmp;
+        // finds the max value of the current state
+        for (var i = d.record.length-1; i >= 0; i--) {
+            tmp = d.record[i].numberOfCases;
+            if (tmp > highest) highest = tmp;
+        }
+        maxCases.push(highest);
     });
 
     // Radius scale
     var rScale = d3.scale.sqrt()
-        .range([0, 14])
-        .domain([0, d3.max(maxCases)]);
+        .domain([0, d3.max(maxCases)])
+        .range([0, 20]);
 
     createMap().then(function() {
         // showDengueCases().then(function() {
@@ -100,37 +105,77 @@
     function showDengueCases() {
         var deferred = $.Deferred();
 
-        dengue_cases.years.forEach(function(year) {
-            dengueCasesByYear(year);
+        dengue_cases.forEach(function(state) {
+            var element = d3.select(".state." + state.uf).node(); // Get the DOM element from a D3 selection.
+            var bbox = element.getBBox(); // Use the native SVG interface to get the bounding box
+            var coordinates = [bbox.x + bbox.width/2, bbox.y + bbox.height/2]; // The center of the bounding box
+
+            // Appends circles that represent the number of dengue cases on each state by year.
+            svg.map.selectAll("circle." + state.uf)
+                .data(state.record)
+                .enter().append("circle")
+                    .attr("id", function(d) { return "circle-" + state.uf + "-" + d.year; })
+                    .attr("r",  function(d) { return rScale(d.numberOfCases); })
+                    .attr("cx", coordinates[0])
+                    .attr("cy", coordinates[1])
+                    .attr("class", "cases")
+                    .style("opacity", 0.85)
+                    .style("visibility", function(d) { return d.year === 2016 ? "visible" : "hidden"; })
+                    .on("mouseover", function(d) { showTooltip(this, d.numberOfCases); })
+	                .on("mouseout",  function(d) { removeTooltip(this); });
         });
+
+        // Recentering paths that are not in a good position.
+        d3.selectAll("[id*=circle-ES]")
+            .attr("cx", function(d) { return parseFloat(d3.select(this).attr("cx")) - 100; });
+        d3.selectAll("[id*=circle-RN]")
+            .attr("cx", function(d) { return parseFloat(d3.select(this).attr("cx")) - 50; })
+            .attr("cy", function(d) { return parseFloat(d3.select(this).attr("cy")) + 50; });
+        d3.selectAll("[id*=circle-PI]")
+            .attr("cx", function(d) { return parseFloat(d3.select(this).attr("cx")) + 20; });
+        d3.selectAll("[id*=circle-SC]")
+            .attr("cx", function(d) { return parseFloat(d3.select(this).attr("cx")) + 20; });
+        d3.selectAll("[id*=circle-RJ]")
+            .attr("cx", function(d) { return parseFloat(d3.select(this).attr("cx")) + 10; })
+            .attr("cy", function(d) { return parseFloat(d3.select(this).attr("cy")) + 5; });
 
         deferred.resolve();
         return deferred.promise();
     }
 
-    function dengueCasesByYear(year) {
-        var data   = getData();
-        var states = ["RO","AC","AM","RR","PA","AP","TO","MA","PI","CE","RN","PB","PE","AL","SE","BA","MG","ES","RJ","SP","PR","SC","RS","DF","GO","MT","MS"]; 
+    /***********************************************
+     ************** Tooltip functions **************
+     ***********************************************/
 
-        svg.map.selectAll("circle.cases")
-            .data(data)
-            .enter().append("circle")
-                .attr("r", function(d) { return 5 ;})
-                .attr("cx", function(d) {
-                    console.log(d);
-                    return path.centroid(d)[0];
-                })
-                .attr("cy", function(d) {
-                    return path.centroid(d)[1];
-                })
-                // .attr("cx", projection([0,0])[0])
-                // .attr("cy", projection([0,0])[1])
-                .style("fill", "black")
-                .style("opacity", year === 2016 ? 1 : 0);
+    function showTooltip(circle, cases) {
+        var element = d3.select("#" + circle.id);
 
-        function getData() {
-            return [1,1,1,1,1,1,1];
-        }
+        // Define and show the tooltip using bootstrap popover;
+        $(element).popover({
+            placement: "auto top", // place the tooltip above the item
+            container: "#chart", // the name (class or id) of the container
+            trigger: "manual",
+            html : true,
+            content: function() { // the html content to show inside the tooltip
+                return "<span style='font-size: 11px; text-align: center;'>Número de casos: " + cases + "</span>"; }
+        });
+        $(element).popover("show");
+
+        // Make chosen circle more visible
+        element.style("opacity", 1);
+    }
+
+    function removeTooltip(circle) {
+        var element = d3.select("#" + circle.id);
+        
+        // Hide the tooltip
+        $(".popover").each(function() {
+            $(this).remove();
+        }); 
+        
+        // Fade out the bright circle again
+        element.style("opacity", 0.85);
+        
     }
 
 })();

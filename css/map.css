@@ -1,3 +1,14 @@
+.popover {
+    pointer-events: none;
+}
+
+.cases {
+    fill: #777;
+    stroke: #3b3d3c;
+    stroke-width: 1.5;
+    stroke-opacity: 1;
+}
+
 .mesh {
     fill: none;
     stroke: #fff;
@@ -18,7 +29,10 @@
 .state.RR,
 .state.PA,
 .state.AP,
-.state.TO { fill: #90eb9d; }
+.state.TO { 
+    fill: #90eb9d; 
+    opacity: .8;
+}
 
 .state.MA,
 .state.PI,
@@ -28,18 +42,30 @@
 .state.PE,
 .state.AL,
 .state.SE,
-.state.BA { fill: #00ccbc; }
+.state.BA { 
+    fill: #CECEFE;
+    opacity: .8; 
+}
 
 .state.MG,
 .state.ES,
 .state.RJ,
-.state.SP { fill: #d7191c; }
+.state.SP { 
+    fill: #1A818C; 
+    opacity: .8;
+}
 
 .state.PR,
 .state.SC,
-.state.RS { fill: #f29e2e; }
+.state.RS { 
+    fill: #f29e2e; 
+    opacity: .8;
+}
 
 .state.DF,
 .state.GO,
 .state.MT,
-.state.MS { fill: #f9d057; }
+.state.MS { 
+    fill: #ffb9b9;
+    opacity: .8; 
+}
