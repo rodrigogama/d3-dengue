@@ -65,9 +65,7 @@
         .range([0, 20]);
 
     createMap().then(function() {
-        // showDengueCases().then(function() {
-            console.log("Done.");
-        // });
+        console.log("Done.");
     });
 
     /////////////////////////////////////
@@ -87,7 +85,9 @@
                 .data(states)
                 .enter().append("path")
                     .attr("d", path)
-                    .attr("class", function(d) { return "state " + d.properties.postal; });
+                    .attr("class", function(d) { return "state " + d.properties.postal; })
+                    .on("mouseover", function(d) { showTooltip(d.properties.postal); })
+                    .on("mouseout",  function(d) { removeTooltip(d.properties.postal); });
 
             svg.map.append("path") // Line between the states
                 .datum(topojson.mesh(br, br.objects.states, function(a, b) { return a !== b; }))
@@ -115,14 +115,14 @@
                 .data(state.record)
                 .enter().append("circle")
                     .attr("id", function(d) { return "circle-" + state.uf + "-" + d.year; })
-                    .attr("r",  function(d) { return rScale(d.numberOfCases); })
+                    .attr("r",  function(d) { return rScale(d.numberOfCases) * 2; })
                     .attr("cx", coordinates[0])
                     .attr("cy", coordinates[1])
                     .attr("class", "cases")
                     .style("opacity", 0.85)
-                    .style("visibility", function(d) { return d.year === 2016 ? "visible" : "hidden"; })
-                    .on("mouseover", function(d) { showTooltip(this, d.numberOfCases); })
-	                .on("mouseout",  function(d) { removeTooltip(this); });
+                    .style("visibility", function(d) { return d.year === 2015 ? "visible" : "hidden"; })
+                    .on("mouseover", function() { showTooltip(state.uf); })
+	                .on("mouseout",function() { removeTooltip(state.uf); });
         });
 
         // Recentering paths that are not in a good position.
@@ -147,8 +147,12 @@
      ************** Tooltip functions **************
      ***********************************************/
 
-    function showTooltip(circle, cases) {
-        var element = d3.select("#" + circle.id);
+    function showTooltip(state) {
+        var cases = 0;
+        var element = d3.selectAll("circle[id^='circle-"+ state +"']").filter(function(d) {
+            cases = d.numberOfCases;
+            return this.style.visibility === "visible";
+        });
 
         // Define and show the tooltip using bootstrap popover;
         $(element).popover({
@@ -165,17 +169,18 @@
         element.style("opacity", 1);
     }
 
-    function removeTooltip(circle) {
-        var element = d3.select("#" + circle.id);
-        
+    function removeTooltip(state) {
+        var element = d3.selectAll("circle[id^='circle-"+ state +"']").filter(function(d) {
+            return this.style.visibility === "visible";
+        });
+
         // Hide the tooltip
         $(".popover").each(function() {
             $(this).remove();
         }); 
         
         // Fade out the bright circle again
-        element.style("opacity", 0.85);
-        
+        element.style("opacity", 0.85);   
     }
 
 })();
