@@ -16,7 +16,7 @@
     svg.append("rect")
         .attr({ width: width, height: height })
         .style("fill", "none")
-        .style("stroke", "black");
+        .style("stroke", "black");    
 
     // SVG filter for the gooey effect
     // Code taken from http://tympanus.net/codrops/2015/03/10/creative-gooey-effects/
@@ -50,6 +50,9 @@
 
     // Creating Brazil's map
     var map = createMap(svg, path);
+
+    // Creates the legend on the left side, which will be placed the clusters by region
+    var leftLegend = createLeftSideLegend(svg);
 
     // Radius scale
     var max = getMax(dengue_cases, "numberOfCases");
@@ -90,16 +93,27 @@
         .attr("cx", coordinates[0])
         .attr("cy", coordinates[1]);
 
+    var legendScaleX = d3.scale.linear()
+        .domain([0, width])
+        .range([0, parseFloat(leftLegend.attr("width"))]);
+
+    var legendScaleY = d3.scale.linear()
+        .domain([0, height])
+        .range([0, parseFloat(leftLegend.attr("height"))]);
+
     // Calculate the centers for each region
     var centers = getCenters("region", [width, height/0.8]);
     centers.forEach(function(d) {
-        d.y = d.y - 100;
-        d.x = d.x + 0;
+        d.y = legendScaleY(d.y - 100);
+        d.x = legendScaleX(d.x + 0);
+        // d.y = d.y - 300;
+        // d.x = d.x - 300;
     });
 
     // Wrapper for the region labels
     var labelWrapper = svg.append("g")
-        .attr("class", "labelWrapper");
+        .attr("class", "labelWrapper")
+        .attr("transform", "translate(0, "+height/2.2+")");
         
     // Append the country labels
     labelWrapper.selectAll(".label")
@@ -107,7 +121,10 @@
         .enter().append("text")
         .attr("class", "label")
         .style("opacity", 0)
-        .attr("transform", function (d) { return "translate(" + (d.x) + ", " + (d.y - 60) + ")"; })
+        .attr("transform", function (d) {
+            // console.log(d); 
+            return "translate(" + (d.x) + ", " + (d.y - 60) + ")"; 
+        })
         .text(function (d) { return d.region });
 
     // Set-up the force
@@ -116,6 +133,9 @@
         .charge(0)
         .on("tick", tick(centers, "region"));
 
+    // showCases();
+    // clusterByRegion();
+
     loop();	
     setInterval(loop, 15000);
     
@@ -123,6 +143,28 @@
         showCases();
         setTimeout(clusterByRegion, 7000);
         setTimeout(backToCenter, 12000);
+    }
+
+    /*******************************************************************************************
+     *********************************** Left-side cluster functions ***************************
+     *******************************************************************************************/
+
+    function createLeftSideLegend(svg) {
+        var width = parseFloat(svg.attr("width")) / 2.9;
+        var height = parseFloat(svg.attr("height")) / 2;
+
+        var legendGroup = svg.append("g")
+            .attr("class", "leftLegend")
+            // .attr({ width: width, height: height })
+            .attr("transform", "translate(5, "+ height +")")
+
+        var legend = legendGroup.append("rect")
+            .attr({ width: width, height: height / .975 })
+            .attr({ x: 0, y: -15 })
+            .style("fill", "none")
+            .style("stroke", "green");
+
+        return legend;
     }
 
     /*******************************************************************************************
@@ -142,9 +184,7 @@
             .data(states)
             .enter().append("path")
                 .attr("d", path)
-                .attr("class", function(d) { return "state " + d.properties.postal; })
-                .on("mouseover", function(d) { showTooltip(d.properties.postal); })
-                .on("mouseout",  function(d) { removeTooltip(d.properties.postal); });
+                .attr("class", function(d) { return "state " + d.properties.postal; });
 
         map.append("path") // Line between the states
             .datum(topojson.mesh(brazilMap, brazilMap.objects.states, function(a, b) { return a !== b; }))
@@ -168,9 +208,7 @@
                     return obj[0].radius;
                 })
                 .attr("cx", coordinates[0])
-                .attr("cy", coordinates[1])
-                .on("mouseover", function(d) { showTooltip(d.uf); })
-                .on("mouseout",function(d) { removeTooltip(d.uf); });;
+                .attr("cy", coordinates[1]);
     }
 
     /*******************************************************************************************
@@ -244,7 +282,17 @@
                 return obj[0].radius = obj[0].radius;
             })
             .attr("cx", function(d) { return d.x = projection([d.lat, d.lon])[0]; })
-            .attr("cy", function(d) { return d.y = projection([d.lat, d.lon])[1]; });
+            .attr("cy", function(d) { return d.y = projection([d.lat, d.lon])[1]; })
+            .call(endAllTransitions, function() {
+                // Set tooltips after the animation is done.
+                d3.selectAll(".cases")
+                    .on("mouseover", function(d) { showTooltip(d.uf); })
+                    .on("mouseout", function(d) { removeTooltip(d.uf); });
+
+                d3.selectAll(".state")
+                    .on("mouseover", function(d) { showTooltip(d.properties.postal); })
+                    .on("mouseout",  function(d) { removeTooltip(d.properties.postal); });
+            });
 
         // Around the end of the transition above make the circles see-through a bit
         d3.selectAll(".cases")
@@ -283,8 +331,23 @@
             .style("opacity", 1);
 
         d3.selectAll(".cases")
+            .style("stroke-opacity", 0)
             .transition().duration(1000)
-            .style("opacity", 1).style("stroke-opacity", 0);
+            .style("opacity", 1);
+
+        // Hide the tooltip if there's any tooltip visible
+        $(".popover").each(function() {
+            $(this).remove();
+        });
+
+        // Remove tooltips
+        d3.selectAll(".cases")
+            .on("mouseover", null)
+            .on("mouseout", null);
+
+        d3.selectAll(".state")
+            .on("mouseover", null)
+            .on("mouseout", null);
 
         //Reset gooey filter values back to a visible "gooey" effect
         d3.selectAll(".blurValues")
@@ -382,11 +445,11 @@
             if (flags[dengue_cases[i][vname]]) continue;
             
             flags[dengue_cases[i][vname]] = true;
-            centers.push({ region: dengue_cases[i][vname], value: 1});
+            centers.push({ region: dengue_cases[i][vname], value: 1 });
         }
 
-        centers.sort(function(a, b){ return d3.ascending(a.name, b.name); });
-
+        centers.sort(function(a, b) { return d3.descending(a.region, b.region); });
+        
         mapping = d3.layout.pack()
             .sort(function(d) { return d[vname]; })
             .size(size);
@@ -408,21 +471,34 @@
                 ny2 = d.y + r;
             quadtree.visit(function(quad, x1, y1, x2, y2) {
                 if (quad.point && (quad.point !== d)) {
-                var x = d.x - quad.point.x,
-                    y = d.y - quad.point.y,
-                    l = Math.sqrt(x * x + y * y),
-                    r = d.radius + quad.point.radius + padding;
-                if (l < r) {
-                    l = (l - r) / l * alpha;
-                    d.x -= x *= l;
-                    d.y -= y *= l;
-                    quad.point.x += x;
-                    quad.point.y += y;
-                }
+                    var x = d.x - quad.point.x,
+                        y = d.y - quad.point.y,
+                        l = Math.sqrt(x * x + y * y),
+                        r = d.radius + quad.point.radius + padding;
+                    if (l < r) {
+                        l = (l - r) / l * alpha;
+                        d.x -= x *= l;
+                        d.y -= y *= l;
+                        quad.point.x += x;
+                        quad.point.y += y;
+                    }
                 }
                 return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
             });
         };
+    }
+
+    function endAllTransitions(transition, callback) { 
+        if (!callback) callback = function() { };
+        if (transition.size() === 0) callback();
+
+        var n = 0;
+        transition
+            .each(function() { ++n; })
+            .each("end", function() {
+                if (!--n) 
+                    callback.apply(this);
+        });
     }
 
 })();

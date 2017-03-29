@@ -9,6 +9,14 @@
     stroke-opacity: 0;
 }
 
+.label {
+    font-size: 18px;
+    text-anchor: middle;
+    fill: #707070;
+    font-family: 'Poiret One', cursive;
+    font-weight: 400;
+}
+
 .casesCover {
     fill: #777;
     opacity: 1;
