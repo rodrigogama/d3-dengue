@@ -6,7 +6,12 @@
     fill: #777;
     stroke: #3b3d3c;
     stroke-width: 1.5;
-    stroke-opacity: 1;
+    stroke-opacity: 0;
+}
+
+.casesCover {
+    fill: #777;
+    opacity: 1;
 }
 
 .mesh {
