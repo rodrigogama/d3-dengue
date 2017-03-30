@@ -173,7 +173,6 @@
     
     function loop() {
         showCases();
-        setTimeout(clusterByRegion, 7000);
         setTimeout(backToCenter, 12000);
     }
 
@@ -390,6 +389,11 @@
         // Stop the force layout
         force.stop();
         
+        // Hide the tooltip
+        $(".popover").each(function() {
+            $(this).remove();
+        }); 
+
         // Make the cover circle to its true size again
         d3.selectAll(".casesCover")
             .transition().duration(3000).delay(500)
@@ -402,7 +406,7 @@
             .delay(function(d, i) { return i * 10; })
             .attr("cx", coordinates[0])
             .attr("cy", coordinates[1]);
-            
+
         // Remove tooltips
         d3.selectAll(".cases")
             .on("mouseover", null)
