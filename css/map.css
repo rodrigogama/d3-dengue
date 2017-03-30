@@ -9,12 +9,20 @@
     stroke-opacity: 0;
 }
 
+.cluster {
+    fill: #777;
+}
+
 .label {
     font-size: 18px;
     text-anchor: middle;
-    fill: #707070;
-    font-family: 'Poiret One', cursive;
-    font-weight: 400;
+    fill: #4F4F4F;
+}
+
+.label-cluster {
+    font-size: 18px;
+    text-anchor: middle;
+    fill: #4F4F4F;
 }
 
 .casesCover {

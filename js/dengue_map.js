@@ -22,20 +22,39 @@
     // Code taken from http://tympanus.net/codrops/2015/03/10/creative-gooey-effects/
     var defs = svg.append("defs");
     var filter = defs.append("filter").attr("id", "gooeyCodeFilter");
-    
+    var filterCluster = defs.append("filter").attr("id", "gooeyCodeFilterCluster");
+
     filter.append("feGaussianBlur")
         .attr("in","SourceGraphic")
         .attr("stdDeviation", "10")
         //to fix safari: http://stackoverflow.com/questions/24295043/svg-gaussian-blur-in-safari-unexpectedly-lightens-image
         .attr("color-interpolation-filters", "sRGB") 
         .attr("result", "blur");
+    filterCluster.append("feGaussianBlur")
+        .attr("in","SourceGraphic")
+        .attr("stdDeviation", "10")
+        //to fix safari: http://stackoverflow.com/questions/24295043/svg-gaussian-blur-in-safari-unexpectedly-lightens-image
+        .attr("color-interpolation-filters", "sRGB") 
+        .attr("result", "blur");
+
     filter.append("feColorMatrix")
         .attr("class", "blurValues")
         .attr("in", "blur")
         .attr("mode", "matrix")
         .attr("values", "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -5")
         .attr("result", "gooey");
+    filterCluster.append("feColorMatrix")
+        .attr("class", "blurValuesCluster")
+        .attr("in", "blur")
+        .attr("mode", "matrix")
+        .attr("values", "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -5")
+        .attr("result", "gooey");
+
     filter.append("feBlend")
+        .attr("in", "SourceGraphic")
+        .attr("in2", "gooey")
+        .attr("operator", "atop");
+    filterCluster.append("feBlend")
         .attr("in", "SourceGraphic")
         .attr("in2", "gooey")
         .attr("operator", "atop");
@@ -74,6 +93,11 @@
         .attr("class", "casesWrapper")
         .style("filter", "url(#gooeyCodeFilter)");
 
+    // Wrapper for the clusters of dengue cases
+    var casesClusterWrapper = svg.append("g")
+        .attr("class", "casesClusterWrapper")
+        .style("filter", "url(#gooeyCodeFilterCluster)");
+
     // Most recent year, used to show its data first
     var lastYear = dengue_cases[0].record[dengue_cases[0].record.length-1].year;
 
@@ -95,7 +119,7 @@
 
     var legendScaleX = d3.scale.linear()
         .domain([0, width])
-        .range([0, parseFloat(leftLegend.attr("width"))]);
+        .range([0, parseFloat(leftLegend.attr("width"))+200]);
 
     var legendScaleY = d3.scale.linear()
         .domain([0, height])
@@ -104,10 +128,11 @@
     // Calculate the centers for each region
     var centers = getCenters("region", [width, height/0.8]);
     centers.forEach(function(d) {
-        d.y = legendScaleY(d.y - 100);
-        d.x = legendScaleX(d.x + 0);
-        // d.y = d.y - 300;
-        // d.x = d.x - 300;
+        d.y = legendScaleY(d.y - 100) + 360;
+        d.x = legendScaleX(d.x - 200);
+        d.total = (function() {
+            return 700000;
+        })();
     });
 
     // Wrapper for the region labels
@@ -115,26 +140,33 @@
         .attr("class", "labelWrapper")
         .attr("transform", "translate(0, "+height/2.2+")");
         
-    // Append the country labels
+    // Append the region labels
     labelWrapper.selectAll(".label")
         .data(centers)
         .enter().append("text")
         .attr("class", "label")
-        .style("opacity", 0)
+        .style("opacity", 1)
         .attr("transform", function (d) {
-            // console.log(d); 
-            return "translate(" + (d.x) + ", " + (d.y - 60) + ")"; 
+            return "translate(" + (d.x) + ", " + (d.y - 60 - 380) + ")"; 
         })
         .text(function (d) { return d.region });
+
+    // Append the region total cases labels
+    labelWrapper.selectAll(".label-cluster")
+        .data(centers)
+        .enter().append("text")
+        .attr("class", "label-cluster")
+        .style("opacity", 1)
+        .attr("transform", function (d) {
+            return "translate(" + (d.x) + ", " + (d.y - 40 - 380) + ")"; 
+        })
+        .text(function (d) { return d.total + " casos"; });
 
     // Set-up the force
     var force = d3.layout.force()
         .gravity(.02)
         .charge(0)
         .on("tick", tick(centers, "region"));
-
-    // showCases();
-    // clusterByRegion();
 
     loop();	
     setInterval(loop, 15000);
@@ -154,7 +186,7 @@
         var height = parseFloat(svg.attr("height")) / 2;
 
         var legendGroup = svg.append("g")
-            .attr("class", "leftLegend")
+            .attr("class", "leftLegendWrapper")
             // .attr({ width: width, height: height })
             .attr("transform", "translate(5, "+ height +")")
 
@@ -207,7 +239,19 @@
                     var obj = d.record.filter(function(e) { return e.year === year; });
                     return obj[0].radius;
                 })
-                .attr("cx", coordinates[0])
+                .attr("cx", coordinates[0]) // map center coordinates
+                .attr("cy", coordinates[1]);
+
+        casesClusterWrapper.selectAll(".clusters")
+            .data(dengue_cases)
+            .enter().append("circle")
+                .attr("id", function(d) { return "cluster-" + d.uf; })
+                .attr("class", "cluster")
+                .attr("r", function(d) {
+                    var obj = d.record.filter(function(e) { return e.year === year; });
+                    return obj[0].radius;
+                })
+                .attr("cx", coordinates[0]) // map center coordinates
                 .attr("cy", coordinates[1]);
     }
 
@@ -294,10 +338,26 @@
                     .on("mouseout",  function(d) { removeTooltip(d.properties.postal); });
             });
 
+        // Put the clusters in the legend at the left side
+        d3.selectAll(".cluster")
+            .transition("move").duration(2000)
+            .delay(function(d, i) { return i * 20; })
+            .attr("r", function(d) {
+                var obj = d.record.filter(function(e) { return e.year === lastYear; });
+                return obj[0].radius = obj[0].radius;
+            })
+            .attr("cx", function(d) {
+                var region = centers.filter(function(center) { return center.region === d.region; });
+                return d.x = region[0].x; 
+            })
+            .attr("cy", function(d) { 
+                var region = centers.filter(function(center) { return center.region === d.region; });
+                return d.y = region[0].y;
+             })
+             .call(endAllTransitions, clusterByRegion)
+
         // Around the end of the transition above make the circles see-through a bit
         d3.selectAll(".cases")
-            // .transition("dim").duration(2000).delay(4000)
-            // .style("opacity", 0.85)
             .transition().duration(2000).delay(1000)
             .style("opacity", 0.85)
             .style("stroke-opacity", 1);
@@ -320,26 +380,29 @@
         // Start force again
         force.start();
 
-        // Dim the map
-        d3.selectAll(".state")
-            .transition().duration(1000)
-            .style("fill-opacity", 0);
-            
-        // Show the labels
-        d3.selectAll(".label")
-            .transition().duration(500)
-            .style("opacity", 1);
 
+    }
+
+    /** @function backToCenter
+     *  @description Move the circles back to the center location again
+    */
+    function backToCenter() {
+        // Stop the force layout
+        force.stop();
+        
+        // Make the cover circle to its true size again
+        d3.selectAll(".casesCover")
+            .transition().duration(3000).delay(500)
+            .attr("r", coverCircleRadius);
+
+        // Move the cities to the 0,0 coordinate
         d3.selectAll(".cases")
             .style("stroke-opacity", 0)
-            .transition().duration(1000)
-            .style("opacity", 1);
-
-        // Hide the tooltip if there's any tooltip visible
-        $(".popover").each(function() {
-            $(this).remove();
-        });
-
+            .transition().duration(2000)
+            .delay(function(d, i) { return i * 10; })
+            .attr("cx", coordinates[0])
+            .attr("cy", coordinates[1]);
+            
         // Remove tooltips
         d3.selectAll(".cases")
             .on("mouseover", null)
@@ -349,50 +412,26 @@
             .on("mouseover", null)
             .on("mouseout", null);
 
-        //Reset gooey filter values back to a visible "gooey" effect
-        d3.selectAll(".blurValues")
-            .transition().duration(2000)
-            .attrTween("values", function() { 
-                return d3.interpolateString("1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 6 -5", 
-                                            "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 35 -6"); 
-            });
-    }
-
-    /** @function backToCenter
-     *  @description Move the circles back to the center location again
-    */
-    function backToCenter() {
-        // Stop the force layout
-        force.stop();
-
-        // Hide labels
-        d3.selectAll(".label")
-            .transition().duration(500)
-            .style("opacity", 0);
-
-        // Show map
-        d3.selectAll(".state")
-            .transition().duration(1000)
-            .style("fill-opacity", 0.8);
-        
-        // Make the cover circle to its true size again
-        d3.selectAll(".casesCover")
-            .transition().duration(3000).delay(500)
-            .attr("r", coverCircleRadius);
-
-        // Move the cities to the 0,0 coordinate
-        d3.selectAll(".cases")
+        // Move the clusters to the 0,0 coordinate
+        d3.selectAll(".cluster")
             .transition().duration(2000)
             .delay(function(d, i) { return i * 10; })
             .attr("cx", coordinates[0])
             .attr("cy", coordinates[1]);
-            
+
         d3.selectAll(".blurValues")
             .transition().duration(1000).delay(1000)
             .attrTween("values", function() {
                 return d3.interpolateString("1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 35 -6",
                                             "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -5");
             });
+
+        // d3.selectAll(".blurValuesCluster")
+        //     .transition().duration(1000).delay(1000)
+        //     .attrTween("values", function() {
+        //         return d3.interpolateString("1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 35 -6",
+        //                                     "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -5");
+        //     });
     }
 
     /*******************************************************************************************
@@ -429,7 +468,7 @@
                 o.x += (f.x - o.x) * e.alpha;
             }
 
-            d3.selectAll(".cases")
+            d3.selectAll(".cluster")
                 .each(collide(.5))
                 .attr("cx", function (d) { return d.x; })
                 .attr("cy", function (d) { return d.y; });
